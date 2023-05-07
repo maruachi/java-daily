@@ -33,7 +33,7 @@ public class Main {
 
         Map<Tag, Integer> failCount = resultDtos.stream()
                 .filter(resultDto -> resultDto.isFail())
-                .collect(Collectors.toMap(r -> r.getTag(), r -> 1, Integer::sum));
+                .collect(Collectors.toUnmodifiableMap(r -> r.getTag(), r -> 1, Integer::sum));
 
         StringBuilder stringBuilder = new StringBuilder(100);
 
