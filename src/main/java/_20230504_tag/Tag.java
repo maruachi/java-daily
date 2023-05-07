@@ -17,7 +17,7 @@ public class Tag implements Comparable{
         return new Tag(FAIL);
     }
 
-    public static Tag createByString(String string) {
+    public static Tag of(String string) {
         return new Tag(Integer.parseInt(string));
     }
 

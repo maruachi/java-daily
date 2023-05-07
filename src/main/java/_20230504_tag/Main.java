@@ -5,7 +5,6 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.IntFunction;
-import java.util.function.IntUnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -35,26 +34,15 @@ public class Main {
                 .filter(resultDto -> resultDto.isFail())
                 .collect(Collectors.toUnmodifiableMap(r -> r.getTag(), r -> 1, Integer::sum));
 
-        StringBuilder stringBuilder = new StringBuilder(100);
+        Map<String, String> logs = new HashMap<>();
 
-        stringBuilder.setLength(0);
-        stringBuilder.append("대기중인 태그:");
-        String tagsResult = tags.stream()
-                .reduce(stringBuilder,
+        logs.put("대기중인태그", tags.stream()
+                .reduce(new StringBuilder(100),
                         (sb, tag) -> sb.append(' ').append(tag.toString()),
                         (sb1, sb2) -> sb1.append(sb2))
-                .toString();
-        System.out.println(tagsResult);
-
-        stringBuilder.setLength(0);
-        String createFailResult = stringBuilder.append("생성실패횟수:").append(' ')
-                .append(failCount.getOrDefault(Tag.crateFailTag(), 0))
-                .toString();
-        System.out.println(createFailResult);
-
-        stringBuilder.setLength(0);
-        stringBuilder.append("실행실패이력:");
-        String tagRunFailResult = failCount.entrySet().stream()
+                .toString());
+        logs.put("생성실패횟수", Integer.toString(failCount.getOrDefault(Tag.crateFailTag(), 0)));
+        logs.put("실행실패이력", failCount.entrySet().stream()
                 .filter(entry -> !entry.getKey().equals(Tag.crateFailTag()))
                 .sorted((entry1, entry2)->{
                     int compareTo = entry2.getValue().compareTo(entry1.getValue());
@@ -63,11 +51,25 @@ public class Main {
                     }
                     return compareTo;
                 })
-                .reduce(stringBuilder,
+                .reduce(new StringBuilder(100),
                         (sb, entry) -> sb.append(' ').append(entry.getKey()).append('(').append(entry.getValue()).append(')'),
                         (sb1, sb2) -> sb1.append(sb2))
-                .toString();
-        System.out.println(tagRunFailResult);
+                .toString());
+
+        List<String> logOneLines = logs.entrySet().stream()
+                .map(entry -> mergeOneLine(entry.getKey(), entry.getValue()))
+                .collect(Collectors.toUnmodifiableList());
+
+        logOneLines.stream()
+                        .forEach(oneLine -> System.out.println(oneLine));
+
+    }
+
+    private static String mergeOneLine(String title, String content) {
+        StringBuilder stringBuilder = new StringBuilder(100);
+        stringBuilder.append(title.trim()).append(':').append(' ').append(content.trim());
+
+        return stringBuilder.toString();
     }
 
     private static Commandable createCommand(String[] lineElements) {
@@ -83,7 +85,7 @@ public class Main {
         }
 
         if (numElement == 2 && command == Command.EXEUCTE) {
-            return new Execute(Tag.createByString(lineElements[1]));
+            return new Execute(Tag.of(lineElements[1]));
         }
 
         throw new RuntimeException();
